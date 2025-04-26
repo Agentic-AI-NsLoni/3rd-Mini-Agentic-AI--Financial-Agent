@@ -1,51 +1,46 @@
+import openai
 from phi.agent import Agent
-from phi.model.groq import Groq
+import phi.api  # Ensure this import comes before any usage
+from phi.model.openai import OpenAIChat
 from phi.tools.yfinance import YFinanceTools
 from phi.tools.duckduckgo import DuckDuckGo
 from dotenv import load_dotenv
+from phi.model.groq import Groq
+
 import os
+from phi.playground import Playground, serve_playground_app
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Get Groq API key from the environment
-groq_api_key = os.getenv("GROQ_API_KEY")
+# Now initialize phi.api after importing it
+phi.api = os.getenv("PHI_API_KEY")  # Set the PHI_API_KEY environment variable
 
-# Web Search Agent using Groq model
+# Web search agent
 web_search_agent = Agent(
     name="Web Search Agent",
-    role="Search the web for information",
-    model=Groq(id="llama3-groq-70b-8192-tool-use-preview", api_key=groq_api_key),
+    role="Search the web for the information",
+    model=Groq(id="llama3-groq-70b-8192-tool-use-preview"),
     tools=[DuckDuckGo()],
     instructions=["Always include sources"],
-    show_tool_calls=True,
+    show_tools_calls=True,
     markdown=True,
 )
 
-# Financial Agent using Groq model
+# Financial agent
 finance_agent = Agent(
     name="Finance AI Agent",
-    model=Groq(id="llama3-groq-70b-8192-tool-use-preview", api_key=groq_api_key),
+    model=Groq(id="llama3-groq-70b-8192-tool-use-preview"),
     tools=[
-        YFinanceTools(
-            stock_price=True,
-            analyst_recommendations=True,
-            stock_fundamentals=True,
-            company_news=True
-        )
+        YFinanceTools(stock_price=True, analyst_recommendations=True, stock_fundamentals=True, company_news=True),
     ],
     instructions=["Use tables to display the data"],
     show_tool_calls=True,
     markdown=True,
 )
 
-# Multi-agent setup with Web Search and Finance Agents
-multi_ai_agent = Agent(
-    team=[web_search_agent, finance_agent],
-    instructions=["Always include sources", "Use table to display the data"],
-    show_tool_calls=True,
-    markdown=True,
-)
+# Create Playground app
+app = Playground(agents=[finance_agent, web_search_agent]).get_app()
 
-# Run the multi-agent system to print the response
-multi_ai_agent.print_response("Summarize analyst recommendation and share the latest news for NVDA", stream=True)
+if __name__ == "__main__":
+    serve_playground_app("playground:app", reload=True)
