@@ -5,16 +5,16 @@ from phi.tools.duckduckgo import DuckDuckGo
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
-# Set Groq API key via environment (automatically used by the phi Groq model)
+# Get Groq API key from the environment
 groq_api_key = os.getenv("GROQ_API_KEY")
 
-# Web Search Agent
+# Web Search Agent using Groq model
 web_search_agent = Agent(
     name="Web Search Agent",
-    role="Search the web for the information",
+    role="Search the web for information",
     model=Groq(id="llama3-groq-70b-8192-tool-use-preview", api_key=groq_api_key),
     tools=[DuckDuckGo()],
     instructions=["Always include sources"],
@@ -22,7 +22,7 @@ web_search_agent = Agent(
     markdown=True,
 )
 
-# Financial Agent
+# Financial Agent using Groq model
 finance_agent = Agent(
     name="Finance AI Agent",
     model=Groq(id="llama3-groq-70b-8192-tool-use-preview", api_key=groq_api_key),
@@ -39,7 +39,7 @@ finance_agent = Agent(
     markdown=True,
 )
 
-# Multi-agent setup
+# Multi-agent setup with Web Search and Finance Agents
 multi_ai_agent = Agent(
     team=[web_search_agent, finance_agent],
     instructions=["Always include sources", "Use table to display the data"],
@@ -47,5 +47,5 @@ multi_ai_agent = Agent(
     markdown=True,
 )
 
-# Run the agent
+# Run the multi-agent system to print the response
 multi_ai_agent.print_response("Summarize analyst recommendation and share the latest news for NVDA", stream=True)
